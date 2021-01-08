@@ -1,5 +1,5 @@
 class MergeRequest < ActiveRecord::Base
-  has_and_belongs_to_many :issues, after_add: :attach_redmine_urls, after_remove: :detach_redmine_urls
+  has_and_belongs_to_many :issues, after_add: :update_linked_comment, after_remove: :update_linked_comment
 
   attr_accessor :description
 
@@ -32,12 +32,9 @@ class MergeRequest < ActiveRecord::Base
     end.uniq
   end
 
-  def attach_redmine_urls(issue)
-    bot.update_attached_redmine_urls(self)
-  end
-
-  def detach_redmine_urls(issue)
-    bot.update_attached_redmine_urls(self)
+  def update_linked_comment(issue)
+    new_linked_comment_id = bot.update_attached_redmine_urls(self)
+    update(linked_comment_id: new_linked_comment_id)
   end
 
   def bot
