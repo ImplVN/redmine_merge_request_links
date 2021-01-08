@@ -1,5 +1,5 @@
 class MergeRequest < ActiveRecord::Base
-  has_and_belongs_to_many :issues
+  has_and_belongs_to_many :issues, after_add: :update_linked_comment, after_remove: :update_linked_comment
 
   attr_accessor :description
 
@@ -30,5 +30,16 @@ class MergeRequest < ActiveRecord::Base
     [description, title].flat_map do |value|
       (value || '').scan(ISSUE_ID_REGEXP)
     end.uniq
+  end
+
+  def update_linked_comment(issue)
+    new_linked_comment_id = bot.update_attached_redmine_urls(self)
+    update(linked_comment_id: new_linked_comment_id)
+  end
+
+  def bot
+    RedmineMergeRequestLinks.bots.detect do |bot|
+      bot.matches?(self)
+    end
   end
 end
